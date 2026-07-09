@@ -1,0 +1,1280 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>領料記錄表</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+      :root {
+        --desk: #e7e2d6;
+        --desk-shadow: #cfc8b6;
+        --paper: #fbf9f3;
+        --paper-edge: #efe9da;
+        --ink: #2b2a28;
+        --ink-soft: #79746a;
+        --rule: #cdc4ae;
+        --stamp: #b23a2f;
+        --stamp-dark: #8f2c23;
+        --stamp-ink: #fdf0ee;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background:
+          radial-gradient(
+            ellipse 120% 80% at 50% -10%,
+            #f1ece0 0%,
+            transparent 60%
+          ),
+          var(--desk);
+        color: var(--ink);
+        font-family:
+          "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        padding: 56px 20px 80px;
+      }
+
+      .stage {
+        width: 100%;
+        max-width: 760px;
+      }
+
+      .sheet {
+        background: var(--paper);
+        border: 1px solid var(--paper-edge);
+        box-shadow:
+          0 1px 0 #fff inset,
+          0 30px 60px -20px rgba(43, 42, 40, 0.35),
+          0 8px 20px -10px rgba(43, 42, 40, 0.25);
+        padding: 52px 56px 60px;
+        position: relative;
+      }
+
+      .sheet::before {
+        content: "";
+        position: absolute;
+        inset: 10px;
+        border: 1px solid #e3dcc9;
+        pointer-events: none;
+      }
+
+      header.title {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      header.title h1 {
+        font-family: "Noto Serif TC", serif;
+        font-weight: 700;
+        font-size: 30px;
+        letter-spacing: 0.12em;
+        margin: 0 0 8px;
+      }
+
+      header.title .sub {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        color: var(--ink-soft);
+        text-transform: uppercase;
+      }
+
+      .field-date {
+        max-width: 240px;
+        margin-bottom: 28px;
+      }
+
+      .field-item {
+        margin-bottom: 28px;
+      }
+
+      .field {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        border-bottom: 1.5px solid var(--rule);
+        padding-bottom: 8px;
+      }
+
+      .field label {
+        font-family: "Noto Serif TC", serif;
+        font-weight: 500;
+        font-size: 16px;
+        color: var(--ink);
+        white-space: nowrap;
+      }
+
+      .field-location {
+        gap: 8px;
+        margin-bottom: 28px;
+      }
+
+      .field-location #location {
+        width: 9em;
+      }
+
+      .field-location #floor {
+        width: 3em;
+        padding-left: 6px;
+        border-left: 1px solid var(--rule);
+      }
+
+      .floor-suffix {
+        margin-left: -6px;
+        font-family: "Noto Serif TC", serif;
+        font-size: 15px;
+        color: var(--ink-soft);
+      }
+
+      .field input {
+        width: 15ch;
+        border: none;
+        background: transparent;
+        outline: none;
+        font-family: "Noto Sans TC", sans-serif;
+        font-size: 16px;
+        color: var(--ink);
+        padding: 4px 2px;
+      }
+
+      .field input::placeholder {
+        color: #bdb6a4;
+      }
+
+      .field:focus-within {
+        border-bottom-color: var(--stamp);
+      }
+
+      .date-display {
+        width: 15ch;
+        border: none;
+        background: transparent;
+        outline: none;
+        font-family: "Noto Sans TC", sans-serif;
+        font-size: 16px;
+        color: var(--ink);
+        padding: 4px 2px;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .section-label {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.15em;
+        color: var(--ink-soft);
+        text-transform: uppercase;
+        margin: 0 0 14px;
+      }
+
+      .section-label::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--rule);
+      }
+
+      #dropzone {
+        border: 1.5px dashed #b8ae94;
+        background:
+          repeating-linear-gradient(
+            135deg,
+            rgba(178, 58, 47, 0.035) 0 10px,
+            transparent 10px 20px
+          ),
+          #f5f1e6;
+        padding: 34px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition:
+          border-color 0.18s ease,
+          background-color 0.18s ease,
+          transform 0.12s ease;
+        position: relative;
+      }
+
+      #dropzone:hover {
+        border-color: var(--stamp);
+      }
+
+      #dropzone.dragover {
+        border-color: var(--stamp);
+        background: #f4e9e6;
+        transform: scale(0.995);
+      }
+
+      #dropzone .dz-icon {
+        font-family: "Noto Serif TC", serif;
+        font-size: 15px;
+        color: var(--ink);
+        margin-bottom: 6px;
+      }
+
+      #dropzone .dz-hint {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--ink-soft);
+        letter-spacing: 0.05em;
+      }
+
+      #fileInput,
+      #cameraInput {
+        display: none;
+      }
+
+      .camera-btn {
+        position: relative;
+        z-index: 1;
+        margin-top: 16px;
+        padding: 8px 22px;
+        border: 1px solid #b8ae94;
+        background: #fff;
+        color: var(--ink);
+        font-family: "Noto Sans TC", sans-serif;
+        font-size: 13px;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        transition:
+          border-color 0.18s ease,
+          color 0.18s ease;
+      }
+
+      .camera-btn:hover {
+        border-color: var(--stamp);
+        color: var(--stamp);
+      }
+
+      #thumbs {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 14px;
+        margin-top: 20px;
+      }
+
+      .thumb {
+        position: relative;
+        background: #fff;
+        border: 1px solid var(--paper-edge);
+        padding: 6px 6px 22px;
+        box-shadow: 0 4px 10px -4px rgba(43, 42, 40, 0.3);
+        transform: rotate(var(--r, 0deg));
+      }
+
+      .thumb img {
+        display: block;
+        width: 100%;
+        height: 92px;
+        object-fit: cover;
+      }
+
+      .thumb .cap {
+        position: absolute;
+        left: 6px;
+        right: 22px;
+        bottom: 4px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        color: var(--ink-soft);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .thumb .rm {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 1px solid var(--paper-edge);
+        background: var(--ink);
+        color: #fff;
+        font-size: 13px;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .thumb .rm:hover {
+        background: var(--stamp);
+      }
+
+      .empty-note {
+        margin-top: 16px;
+        font-size: 13px;
+        color: var(--ink-soft);
+        text-align: center;
+      }
+
+      .save-warn {
+        margin-top: 14px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--stamp);
+        text-align: center;
+      }
+
+      .actions {
+        display: flex;
+        justify-content: center;
+        margin-top: 52px;
+      }
+
+      .stamp-btn {
+        --size: 116px;
+        width: var(--size);
+        height: var(--size);
+        border-radius: 50%;
+        border: 3px solid var(--stamp);
+        background: transparent;
+        color: var(--stamp);
+        font-family: "Noto Serif TC", serif;
+        font-weight: 700;
+        font-size: 17px;
+        letter-spacing: 0.14em;
+        cursor: pointer;
+        transform: rotate(-6deg);
+        transition:
+          transform 0.15s ease,
+          background-color 0.15s ease,
+          color 0.15s ease,
+          box-shadow 0.15s ease;
+        box-shadow: 0 0 0 3px rgba(178, 58, 47, 0) inset;
+        position: relative;
+      }
+
+      .stamp-btn::before {
+        content: "";
+        position: absolute;
+        inset: 6px;
+        border: 1px solid var(--stamp);
+        border-radius: 50%;
+        opacity: 0.55;
+      }
+
+      .stamp-btn:hover {
+        background: var(--stamp);
+        color: var(--stamp-ink);
+        transform: rotate(-6deg) scale(1.04);
+      }
+
+      .stamp-btn:active {
+        transform: rotate(-6deg) scale(0.94);
+      }
+
+      .stamp-btn:disabled {
+        opacity: 0.45;
+        cursor: wait;
+        transform: rotate(-6deg);
+      }
+
+      footer.note {
+        text-align: center;
+        margin-top: 22px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--ink-soft);
+        letter-spacing: 0.05em;
+      }
+
+      .clear-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1;
+        border: 1px solid var(--rule);
+        background: transparent;
+        color: var(--ink-soft);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        padding: 5px 10px;
+        cursor: pointer;
+        transition:
+          color 0.15s ease,
+          border-color 0.15s ease;
+      }
+
+      .clear-btn:hover {
+        color: var(--stamp);
+        border-color: var(--stamp);
+      }
+
+      .picker-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(20, 18, 15, 0.45);
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+        z-index: 100;
+      }
+
+      .picker-overlay.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .picker-sheet {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 420px;
+        max-height: 100%;
+        overflow: hidden;
+        background: var(--paper);
+        border-top: 1px solid var(--paper-edge);
+        box-shadow: 0 -12px 30px -10px rgba(43, 42, 40, 0.35);
+        padding: 18px 20px 28px;
+        transform: translateY(12px);
+        transition: transform 0.2s ease;
+      }
+
+      .picker-overlay.open .picker-sheet {
+        transform: translateY(0);
+      }
+
+      .picker-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 14px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid var(--rule);
+        font-family: "Noto Serif TC", serif;
+        font-size: 15px;
+        color: var(--ink);
+      }
+
+      .picker-header span {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .picker-done {
+        flex-shrink: 0;
+        border: none;
+        background: transparent;
+        color: var(--stamp);
+        font-family: "Noto Sans TC", sans-serif;
+        font-weight: 700;
+        font-size: 15px;
+        cursor: pointer;
+      }
+
+      .picker-wheels {
+        position: relative;
+        display: flex;
+        align-items: center;
+        height: 180px;
+        overflow: hidden;
+      }
+
+      .wheel-col {
+        flex: 1 1 0;
+        min-width: 0;
+        height: 180px;
+        overflow-y: scroll;
+        scroll-snap-type: y mandatory;
+        scrollbar-width: none;
+      }
+
+      .wheel-col::-webkit-scrollbar {
+        display: none;
+      }
+
+      .wheel-item {
+        height: 36px;
+        line-height: 36px;
+        text-align: center;
+        scroll-snap-align: center;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 18px;
+        color: var(--ink-soft);
+      }
+
+      .wheel-item.selected {
+        color: var(--ink);
+        font-weight: 700;
+      }
+
+      .wheel-unit {
+        flex-shrink: 0;
+        font-family: "Noto Serif TC", serif;
+        font-size: 13px;
+        color: var(--ink-soft);
+        padding: 0 4px 0 2px;
+      }
+
+      .wheel-highlight {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 36px;
+        border-top: 1px solid var(--rule);
+        border-bottom: 1px solid var(--rule);
+        pointer-events: none;
+      }
+
+      @media (max-width: 560px) {
+        .sheet {
+          padding: 34px 22px 44px;
+        }
+        .field-date {
+          max-width: none;
+        }
+        .field input {
+          width: auto;
+          flex: 1;
+        }
+        .field-location #floor {
+          flex: 0 0 3em;
+        }
+        .date-display {
+          width: auto;
+          flex: 1;
+        }
+        .picker-sheet {
+          padding: 16px 12px 24px;
+        }
+        .wheel-unit {
+          font-size: 12px;
+          padding: 0 2px;
+        }
+        header.title h1 {
+          font-size: 24px;
+        }
+        header.title {
+          padding-top: 24px;
+        }
+        .clear-btn {
+          top: 14px;
+          right: 14px;
+          font-size: 10px;
+          padding: 4px 8px;
+        }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --desk: #1c1a17;
+          --paper: #242220;
+          --paper-edge: #37332c;
+          --ink: #ece7db;
+          --ink-soft: #9d9686;
+          --rule: #4a4438;
+        }
+        #dropzone {
+          background: #2b2823;
+        }
+        .thumb {
+          background: #2b2823;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage">
+      <div class="sheet">
+        <button type="button" id="clearBtn" class="clear-btn">
+          清除已儲存資料
+        </button>
+        <header class="title">
+          <h1>轉 Word</h1>
+          <div class="sub">Convert to Word</div>
+        </header>
+
+        <div class="field field-date">
+          <label for="dateDisplay">日期</label>
+          <button type="button" id="dateDisplay" class="date-display"></button>
+          <input id="date" type="hidden" />
+        </div>
+
+        <div class="field field-location">
+          <label for="location">地點</label>
+          <input
+            id="location"
+            type="text"
+            list="locationOptions"
+            placeholder="請輸入地點"
+            autocomplete="off"
+          />
+          <input
+            id="floor"
+            type="text"
+            placeholder="樓層"
+            maxlength="4"
+            autocomplete="off"
+          />
+          <span class="floor-suffix">F</span>
+          <datalist id="locationOptions">
+            <option value="中正樓"></option>
+            <option value="介壽堂"></option>
+            <option value="傳統醫學"></option>
+            <option value="動力大樓"></option>
+            <option value="向日葵鬱金香"></option>
+            <option value="地下街"></option>
+            <option value="孝威館"></option>
+            <option value="思源樓"></option>
+            <option value="手術大樓"></option>
+            <option value="托兒所"></option>
+            <option value="核醫精準醫療中心"></option>
+            <option value="法定停車場"></option>
+            <option value="湖畔門診"></option>
+            <option value="福利社"></option>
+            <option value="科技大樓"></option>
+            <option value="立體停車場"></option>
+            <option value="第一門診"></option>
+            <option value="第三停車場"></option>
+            <option value="第三門診"></option>
+            <option value="第二門診"></option>
+            <option value="精神樓"></option>
+            <option value="臨床技術訓練中心"></option>
+            <option value="致德樓"></option>
+            <option value="警衛室"></option>
+            <option value="醫企部"></option>
+            <option value="醫生宿舍"></option>
+            <option value="醫護大樓"></option>
+            <option value="重粒子"></option>
+            <option value="長青樓"></option>
+          </datalist>
+        </div>
+
+        <div class="field field-item">
+          <label for="item">項目</label>
+          <input id="item" type="text" placeholder="請輸入項目" />
+        </div>
+
+        <div class="section-label">貼 附 照 片</div>
+
+        <div id="dropzone">
+          <div class="dz-icon">將圖片拖曳到此處</div>
+          <div class="dz-hint">或點擊選擇檔案 · 可多選</div>
+          <button type="button" id="cameraBtn" class="camera-btn">拍照</button>
+          <input id="fileInput" type="file" accept="image/*" multiple />
+          <input
+            id="cameraInput"
+            type="file"
+            accept="image/*"
+            capture="environment"
+          />
+        </div>
+
+        <div id="thumbs"></div>
+        <div class="empty-note" id="emptyNote">尚未加入任何照片</div>
+        <div class="save-warn" id="saveWarn" hidden>
+          ⚠ 資料量超過瀏覽器儲存空間，目前內容不會自動保存，請盡快輸出 Word
+        </div>
+
+        <div class="actions">
+          <button class="stamp-btn" id="exportBtn" type="button">
+            輸&nbsp;出<br />Word
+          </button>
+        </div>
+
+        <footer class="note">輸出為 A4 直式 · .docx</footer>
+      </div>
+    </div>
+
+    <div id="datePickerOverlay" class="picker-overlay">
+      <div class="picker-sheet">
+        <div class="picker-header">
+          <span>選擇日期</span>
+          <button type="button" id="pickerDone" class="picker-done">
+            完成
+          </button>
+        </div>
+        <div class="picker-wheels">
+          <div class="wheel-col" id="wheelYear"></div>
+          <div class="wheel-unit">年</div>
+          <div class="wheel-col" id="wheelMonth"></div>
+          <div class="wheel-unit">月</div>
+          <div class="wheel-col" id="wheelDay"></div>
+          <div class="wheel-unit">日</div>
+          <div class="wheel-highlight"></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import("https://cdn.jsdelivr.net/npm/docx@8/+esm")
+        .then((mod) => {
+          window.docx = mod;
+        })
+        .catch((err) => {
+          console.error("docx 模組載入失敗：", err);
+        });
+    </script>
+    <script>
+      const dropzone = document.getElementById("dropzone");
+      const fileInput = document.getElementById("fileInput");
+      const cameraBtn = document.getElementById("cameraBtn");
+      const cameraInput = document.getElementById("cameraInput");
+      const thumbs = document.getElementById("thumbs");
+      const emptyNote = document.getElementById("emptyNote");
+      const exportBtn = document.getElementById("exportBtn");
+      const saveWarn = document.getElementById("saveWarn");
+      const clearBtn = document.getElementById("clearBtn");
+      const dateInput = document.getElementById("date");
+      const dateDisplay = document.getElementById("dateDisplay");
+      const pickerOverlay = document.getElementById("datePickerOverlay");
+      const pickerDone = document.getElementById("pickerDone");
+      const wheelYear = document.getElementById("wheelYear");
+      const wheelMonth = document.getElementById("wheelMonth");
+      const wheelDay = document.getElementById("wheelDay");
+      const locationInput = document.getElementById("location");
+      const floorInput = document.getElementById("floor");
+      const itemInput = document.getElementById("item");
+
+      function locationWithFloor() {
+        const loc = locationInput.value.trim();
+        const floor = floorInput.value.trim();
+        return floor ? `${loc}${floor}F` : loc;
+      }
+
+      function pad2(n) {
+        return String(n).padStart(2, "0");
+      }
+
+      function todayIso() {
+        const now = new Date();
+        return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+      }
+
+      function daysInMonth(y, m) {
+        return new Date(y, m, 0).getDate();
+      }
+
+      function range(start, end) {
+        const out = [];
+        for (let v = start; v <= end; v++) out.push(v);
+        return out;
+      }
+
+      function updateDateDisplay() {
+        const iso = dateInput.value;
+        if (!iso) {
+          dateDisplay.textContent = "請選擇日期";
+          return;
+        }
+        const [y, m, d] = iso.split("-").map(Number);
+        dateDisplay.textContent = `${y} / ${pad2(m)} / ${pad2(d)}`;
+      }
+
+      const WHEEL_ITEM_H = 36;
+      let pickerState = { y: 0, m: 0, d: 0 };
+
+      function markSelected(col, idx) {
+        col.querySelectorAll(".wheel-item").forEach((el, i) => {
+          el.classList.toggle("selected", i === idx);
+        });
+      }
+
+      function buildWheel(col, values, selectedValue, formatter) {
+        col._values = values; // 與 DOM 同步的值陣列，settle 時以此對應索引
+        col.innerHTML = "";
+        const pad = document.createElement("div");
+        pad.style.height = WHEEL_ITEM_H * 2 + "px";
+        col.appendChild(pad.cloneNode());
+        values.forEach((v) => {
+          const item = document.createElement("div");
+          item.className = "wheel-item";
+          item.textContent = formatter(v);
+          col.appendChild(item);
+        });
+        col.appendChild(pad.cloneNode());
+        const idx = Math.max(values.indexOf(selectedValue), 0);
+        col.scrollTop = idx * WHEEL_ITEM_H;
+        markSelected(col, idx);
+      }
+
+      function attachWheel(col, onSettle) {
+        let timer = null;
+        col.addEventListener("scroll", () => {
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            const values = col._values || [];
+            if (!values.length) return;
+            const idx = Math.min(
+              Math.max(Math.round(col.scrollTop / WHEEL_ITEM_H), 0),
+              values.length - 1,
+            );
+            col.scrollTo({ top: idx * WHEEL_ITEM_H, behavior: "smooth" });
+            markSelected(col, idx);
+            onSettle(values[idx]);
+          }, 120);
+        });
+      }
+
+      function rebuildDayWheel() {
+        const dim = daysInMonth(pickerState.y, pickerState.m);
+        const days = range(1, dim);
+        pickerState.d = Math.min(pickerState.d, dim);
+        buildWheel(wheelDay, days, pickerState.d, pad2);
+      }
+
+      function openDatePicker() {
+        const iso = dateInput.value || todayIso();
+        const [y, m, d] = iso.split("-").map(Number);
+        pickerState = { y, m, d };
+        buildWheel(wheelYear, range(y - 5, y + 5), y, (v) => String(v));
+        buildWheel(wheelMonth, range(1, 12), m, pad2);
+        rebuildDayWheel();
+        pickerOverlay.classList.add("open");
+      }
+
+      function closeDatePicker() {
+        pickerOverlay.classList.remove("open");
+      }
+
+      attachWheel(wheelYear, (v) => {
+        if (v === pickerState.y) return;
+        pickerState.y = v;
+        rebuildDayWheel();
+      });
+      attachWheel(wheelMonth, (v) => {
+        if (v === pickerState.m) return;
+        pickerState.m = v;
+        rebuildDayWheel();
+      });
+      attachWheel(wheelDay, (v) => {
+        pickerState.d = v;
+      });
+
+      dateDisplay.addEventListener("click", openDatePicker);
+      pickerDone.addEventListener("click", () => {
+        dateInput.value = `${pickerState.y}-${pad2(pickerState.m)}-${pad2(pickerState.d)}`;
+        updateDateDisplay();
+        saveState();
+        closeDatePicker();
+      });
+      pickerOverlay.addEventListener("click", (e) => {
+        if (e.target === pickerOverlay) closeDatePicker();
+      });
+
+      function formatDate(isoDate) {
+        if (!isoDate) return "";
+        const [y, m, d] = isoDate.split("-").map(Number);
+        return `${y}/${pad2(m)}/${pad2(d)}`;
+      }
+
+      function formatDateCompact(isoDate) {
+        if (!isoDate) return "";
+        const [y, m, d] = isoDate.split("-").map(Number);
+        return `${y}${pad2(m)}${pad2(d)}`;
+      }
+
+      let images = [];
+
+      const PHOTO_RATIO = 4 / 3;
+      const PHOTO_MAX_W = 1200;
+      const STORAGE_KEY = "siteRecordFormV1";
+
+      function refreshEmptyNote() {
+        emptyNote.style.display = images.length ? "none" : "block";
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+              date: dateInput.value,
+              location: locationInput.value,
+              floor: floorInput.value,
+              item: itemInput.value,
+              images: images.map((i) => ({
+                name: i.name,
+                dataUrl: i.dataUrl,
+                rot: i.rot,
+              })),
+            }),
+          );
+          saveWarn.hidden = true;
+        } catch (err) {
+          console.warn("無法儲存到 localStorage（可能空間不足）", err);
+          saveWarn.hidden = false;
+        }
+      }
+
+      function loadState() {
+        let saved;
+        try {
+          saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        } catch (err) {
+          saved = null;
+        }
+        if (!saved) return;
+        if (saved.date) dateInput.value = saved.date;
+        locationInput.value = saved.location || "";
+        floorInput.value = saved.floor || "";
+        itemInput.value = saved.item || "";
+        (saved.images || []).forEach((data) => {
+          const item = {
+            name: data.name,
+            dataUrl: data.dataUrl,
+            rot: data.rot || "0",
+          };
+          images.push(item);
+          renderThumb(item);
+        });
+        refreshEmptyNote();
+      }
+
+      function resizeImage(file) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          const img = new Image();
+          img.onload = () => {
+            const outW = PHOTO_MAX_W;
+            const outH = outW / PHOTO_RATIO;
+            const canvas = document.createElement("canvas");
+            canvas.width = outW;
+            canvas.height = outH;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, outW, outH);
+            URL.revokeObjectURL(url);
+            resolve(canvas.toDataURL("image/jpeg", 0.9));
+          };
+          img.onerror = reject;
+          img.src = url;
+        });
+      }
+
+      function addFiles(fileList) {
+        const files = Array.from(fileList).filter((f) =>
+          f.type.startsWith("image/"),
+        );
+        if (!files.length) return;
+        Promise.all(
+          files.map((file) =>
+            resizeImage(file)
+              .then((dataUrl) => ({
+                name: file.name,
+                dataUrl,
+                rot: (Math.random() * 4 - 2).toFixed(2),
+              }))
+              .catch(() => null),
+          ),
+        ).then((items) => {
+          const failed = files.filter((_, i) => !items[i]).map((f) => f.name);
+          items.filter(Boolean).forEach((item) => {
+            images.push(item);
+            renderThumb(item);
+          });
+          refreshEmptyNote();
+          saveState();
+          if (failed.length) {
+            alert(`以下檔案無法讀取，已略過：\n${failed.join("\n")}`);
+          }
+        });
+      }
+
+      function renderThumb(item) {
+        const el = document.createElement("div");
+        el.className = "thumb";
+        el.style.setProperty("--r", item.rot + "deg");
+        el.innerHTML = `
+      <img alt="">
+      <div class="cap"><\/div>
+      <div class="rm" title="移除">&times;<\/div>
+    `;
+        el.querySelector("img").src = item.dataUrl;
+        el.querySelector(".cap").textContent = item.name;
+        el.querySelector(".rm").addEventListener("click", () => {
+          images = images.filter((i) => i !== item);
+          el.remove();
+          refreshEmptyNote();
+          saveState();
+        });
+        thumbs.appendChild(el);
+      }
+
+      dropzone.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", (e) => {
+        addFiles(e.target.files);
+        fileInput.value = "";
+      });
+
+      cameraBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        cameraInput.click();
+      });
+      cameraInput.addEventListener("change", (e) => {
+        addFiles(e.target.files);
+        cameraInput.value = "";
+      });
+
+      [locationInput, itemInput].forEach((el) => {
+        el.addEventListener("input", saveState);
+      });
+
+      floorInput.addEventListener("input", () => {
+        floorInput.value = floorInput.value.replace(/[^a-zA-Z0-9]/g, "");
+        saveState();
+      });
+
+      clearBtn.addEventListener("click", () => {
+        if (!confirm("確定要清除已儲存的表單資料與照片嗎？")) return;
+        localStorage.removeItem(STORAGE_KEY);
+        dateInput.value = todayIso();
+        locationInput.value = "";
+        floorInput.value = "";
+        itemInput.value = "";
+        images = [];
+        thumbs.innerHTML = "";
+        saveWarn.hidden = true;
+        refreshEmptyNote();
+        updateDateDisplay();
+      });
+
+      dateInput.value = todayIso();
+      loadState();
+      updateDateDisplay();
+
+      ["dragenter", "dragover"].forEach((evt) => {
+        dropzone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add("dragover");
+        });
+      });
+      ["dragleave", "drop"].forEach((evt) => {
+        dropzone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove("dragover");
+        });
+      });
+      dropzone.addEventListener("drop", (e) => {
+        if (e.dataTransfer.files && e.dataTransfer.files.length) {
+          addFiles(e.dataTransfer.files);
+        }
+      });
+
+      function sanitizeFilename(name) {
+        return name.replace(/[\\/:*?"<>|]/g, "").trim();
+      }
+
+      function computeGrid() {
+        // 固定兩欄、固定尺寸，不再壓縮成單頁；超出的列由 Word 自動換頁
+        const w = 7.6; // cm
+        return { cols: 2, w, h: Number(((w * 3) / 4).toFixed(2)) };
+      }
+
+      async function dataUrlToBytes(dataUrl) {
+        const res = await fetch(dataUrl);
+        return new Uint8Array(await res.arrayBuffer());
+      }
+
+      async function buildDocx({ item, dateStr, loc, grid, cols }) {
+        const {
+          Document,
+          Packer,
+          Paragraph,
+          TextRun,
+          Table,
+          TableRow,
+          TableCell,
+          ImageRun,
+          AlignmentType,
+          WidthType,
+          BorderStyle,
+        } = docx;
+
+        const line = { style: BorderStyle.SINGLE, size: 6, color: "808080" };
+        const cellBorders = {
+          top: line,
+          bottom: line,
+          left: line,
+          right: line,
+        };
+        // 儲存格內距（twip），讓圖片與框線、相鄰圖片之間留出間隔
+        const cellMargins = { top: 120, bottom: 120, left: 120, right: 120 };
+        const pxW = Math.round(grid.w * 37.8);
+        const pxH = Math.round(grid.h * 37.8);
+
+        const allBytes = await Promise.all(
+          images.map((img) => dataUrlToBytes(img.dataUrl)),
+        );
+
+        const rows = [];
+        for (let i = 0; i < allBytes.length; i += cols) {
+          rows.push(allBytes.slice(i, i + cols));
+        }
+
+        const tableRows = [];
+        for (const row of rows) {
+          const cells = [];
+          for (const bytes of row) {
+            cells.push(
+              new TableCell({
+                width: {
+                  size: Math.round(100 / cols),
+                  type: WidthType.PERCENTAGE,
+                },
+                borders: cellBorders,
+                margins: cellMargins,
+                children: [
+                  new Paragraph({
+                    alignment: AlignmentType.CENTER,
+                    children: [
+                      new ImageRun({
+                        data: bytes,
+                        type: "jpg",
+                        transformation: { width: pxW, height: pxH },
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            );
+          }
+          tableRows.push(new TableRow({ children: cells, cantSplit: true }));
+        }
+
+        const children = [
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 160 },
+            children: [
+              new TextRun({
+                text: item || "領料記錄表",
+                bold: true,
+                size: 32,
+                font: "微軟正黑體",
+              }),
+            ],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 360 },
+            border: {
+              bottom: {
+                style: BorderStyle.SINGLE,
+                size: 6,
+                color: "CCCCCC",
+                space: 8,
+              },
+            },
+            children: [
+              new TextRun({
+                text: `日期：${dateStr || "—"}  地點：${loc || "—"}`,
+                size: 22,
+                color: "666666",
+                font: "微軟正黑體",
+              }),
+            ],
+          }),
+        ];
+
+        if (tableRows.length) {
+          children.push(
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              borders: {
+                top: line,
+                bottom: line,
+                left: line,
+                right: line,
+                insideHorizontal: line,
+                insideVertical: line,
+              },
+              rows: tableRows,
+            }),
+          );
+        } else {
+          children.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: "（無照片）", color: "999999" })],
+            }),
+          );
+        }
+
+        const doc = new Document({
+          sections: [
+            {
+              properties: {
+                page: {
+                  size: { width: 11906, height: 16838 },
+                  margin: { top: 1247, bottom: 1247, left: 1247, right: 1247 },
+                },
+              },
+              children,
+            },
+          ],
+        });
+
+        return Packer.toBlob(doc);
+      }
+
+      exportBtn.addEventListener("click", async () => {
+        if (typeof docx === "undefined") {
+          console.error(
+            "docx 全域變數不存在——CDN 腳本可能被封鎖、404，或該版本沒有暴露全域變數。請開啟開發者工具的 Network 分頁，檢查 docx@8/build/index.js 這個請求的狀態碼。",
+          );
+          alert(
+            "Word 匯出功能需要網路連線以載入必要元件，請確認網路連線後重新整理頁面再試一次。（若仍失敗，請開啟瀏覽器主控台查看詳細錯誤訊息）",
+          );
+          return;
+        }
+
+        exportBtn.disabled = true;
+        try {
+          const loc = locationWithFloor();
+          const item = itemInput.value.trim();
+          const dateStr = formatDate(dateInput.value);
+          const dateCompact = formatDateCompact(dateInput.value);
+          const grid = computeGrid();
+          const cols = grid.cols;
+
+          const blob = await buildDocx({ item, dateStr, loc, grid, cols });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          const baseName =
+            sanitizeFilename(
+              [dateCompact, loc, item].filter(Boolean).join("_"),
+            ) || "領料記錄表";
+          a.href = url;
+          a.download = baseName + ".docx";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } catch (err) {
+          console.error("Word 匯出失敗：", err);
+          alert("Word 匯出失敗，請再試一次。（詳細錯誤請見瀏覽器主控台）");
+        } finally {
+          exportBtn.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
