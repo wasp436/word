@@ -260,6 +260,11 @@
         padding: 6px 6px 22px;
         box-shadow: 0 4px 10px -4px rgba(43, 42, 40, 0.3);
         transform: rotate(var(--r, 0deg));
+        cursor: grab;
+      }
+
+      .thumb.dragging {
+        opacity: 0.45;
       }
 
       .thumb img {
@@ -272,7 +277,7 @@
       .thumb .cap {
         position: absolute;
         left: 6px;
-        right: 22px;
+        right: 46px;
         bottom: 4px;
         font-family: "JetBrains Mono", monospace;
         font-size: 9px;
@@ -280,6 +285,32 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+
+      .thumb .mv {
+        position: absolute;
+        bottom: 1px;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        border: none;
+        background: transparent;
+        color: var(--ink-soft);
+        font-size: 15px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .thumb .mv:hover {
+        color: var(--stamp);
+      }
+
+      .thumb .mv-l {
+        right: 22px;
+      }
+
+      .thumb .mv-r {
+        right: 2px;
       }
 
       .thumb .rm {
@@ -554,14 +585,23 @@
       </div>
     </div>
 
-    <script type="module">
-      import("https://cdn.jsdelivr.net/npm/docx@8/+esm")
-        .then((mod) => {
-          window.docx = mod;
-        })
-        .catch((err) => {
-          console.error("docx 模組載入失敗：", err);
-        });
+    <script>
+      // 優先載入同資料夾的 docx.js（可完全離線使用），不存在時退回 CDN
+      (function loadDocxLib() {
+        const local = document.createElement("script");
+        local.src = "docx.js";
+        local.onerror = () => {
+          const cdn = document.createElement("script");
+          cdn.src = "https://cdn.jsdelivr.net/npm/docx@8/build/index.umd.js";
+          cdn.onerror = () => {
+            console.error(
+              "docx 函式庫載入失敗：本機找不到 docx.js，CDN 也無法連線。",
+            );
+          };
+          document.head.appendChild(cdn);
+        };
+        document.head.appendChild(local);
+      })();
     </script>
     <script>
       const dropzone = document.getElementById("dropzone");
@@ -609,27 +649,42 @@
 
       const PHOTO_RATIO = 4 / 3;
       const PHOTO_MAX_W = 1200;
-      const STORAGE_KEY = "siteRecordFormV1";
+      const LEGACY_STORAGE_KEY = "siteRecordFormV1"; // 舊版單一儲存鍵，僅供遷移
+      const TEXT_KEY = "siteRecordTextV2";
+      const IMAGES_KEY = "siteRecordImagesV2";
 
       function refreshEmptyNote() {
         emptyNote.style.display = images.length ? "none" : "block";
       }
 
-      function saveState() {
+      // 文字與照片分開儲存：打字時只寫入文字，避免每個字元都重新序列化全部照片
+      function saveText() {
         try {
           localStorage.setItem(
-            STORAGE_KEY,
+            TEXT_KEY,
             JSON.stringify({
               date: dateInput.value,
               location: locationInput.value,
               floor: floorInput.value,
               item: itemInput.value,
-              images: images.map((i) => ({
+            }),
+          );
+        } catch (err) {
+          console.warn("無法儲存文字欄位到 localStorage", err);
+        }
+      }
+
+      function saveImages() {
+        try {
+          localStorage.setItem(
+            IMAGES_KEY,
+            JSON.stringify(
+              images.map((i) => ({
                 name: i.name,
                 dataUrl: i.dataUrl,
                 rot: i.rot,
               })),
-            }),
+            ),
           );
           saveWarn.hidden = true;
         } catch (err) {
@@ -639,27 +694,38 @@
       }
 
       function loadState() {
-        let saved;
-        try {
-          saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        } catch (err) {
-          saved = null;
+        const parse = (key) => {
+          try {
+            return JSON.parse(localStorage.getItem(key));
+          } catch (err) {
+            return null;
+          }
+        };
+        let text = parse(TEXT_KEY);
+        let imgs = parse(IMAGES_KEY);
+        // 從舊版單一鍵遷移
+        if (!text && !imgs) {
+          const legacy = parse(LEGACY_STORAGE_KEY);
+          if (legacy) {
+            text = legacy;
+            imgs = legacy.images;
+            localStorage.removeItem(LEGACY_STORAGE_KEY);
+          }
         }
-        if (!saved) return;
-        if (saved.date) dateInput.value = saved.date;
-        locationInput.value = saved.location || "";
-        floorInput.value = saved.floor || "";
-        itemInput.value = saved.item || "";
-        (saved.images || []).forEach((data) => {
-          const item = {
+        if (text) {
+          if (text.date) dateInput.value = text.date;
+          locationInput.value = text.location || "";
+          floorInput.value = text.floor || "";
+          itemInput.value = text.item || "";
+        }
+        (imgs || []).forEach((data) => {
+          images.push({
             name: data.name,
             dataUrl: data.dataUrl,
             rot: data.rot || "0",
-          };
-          images.push(item);
-          renderThumb(item);
+          });
         });
-        refreshEmptyNote();
+        renderAllThumbs();
       }
 
       function resizeImage(file) {
@@ -701,34 +767,79 @@
           const failed = files.filter((_, i) => !items[i]).map((f) => f.name);
           items.filter(Boolean).forEach((item) => {
             images.push(item);
-            renderThumb(item);
           });
-          refreshEmptyNote();
-          saveState();
+          renderAllThumbs();
+          saveImages();
           if (failed.length) {
             alert(`以下檔案無法讀取，已略過：\n${failed.join("\n")}`);
           }
         });
       }
 
-      function renderThumb(item) {
+      let dragSrcIndex = null;
+
+      function moveImage(from, to) {
+        if (to < 0 || to >= images.length || from === to) return;
+        const [moved] = images.splice(from, 1);
+        images.splice(to, 0, moved);
+        renderAllThumbs();
+        saveImages();
+      }
+
+      function renderAllThumbs() {
+        thumbs.innerHTML = "";
+        images.forEach((item, idx) => {
+          thumbs.appendChild(createThumb(item, idx));
+        });
+        refreshEmptyNote();
+      }
+
+      function createThumb(item, idx) {
         const el = document.createElement("div");
         el.className = "thumb";
         el.style.setProperty("--r", item.rot + "deg");
+        el.draggable = true;
         el.innerHTML = `
-      <img alt="">
+      <img alt="" draggable="false">
       <div class="cap"><\/div>
+      <button type="button" class="mv mv-l" title="往前移">&lsaquo;<\/button>
+      <button type="button" class="mv mv-r" title="往後移">&rsaquo;<\/button>
       <div class="rm" title="移除">&times;<\/div>
     `;
         el.querySelector("img").src = item.dataUrl;
         el.querySelector(".cap").textContent = item.name;
         el.querySelector(".rm").addEventListener("click", () => {
-          images = images.filter((i) => i !== item);
-          el.remove();
-          refreshEmptyNote();
-          saveState();
+          images.splice(idx, 1);
+          renderAllThumbs();
+          saveImages();
         });
-        thumbs.appendChild(el);
+        el.querySelector(".mv-l").addEventListener("click", () => {
+          moveImage(idx, idx - 1);
+        });
+        el.querySelector(".mv-r").addEventListener("click", () => {
+          moveImage(idx, idx + 1);
+        });
+        el.addEventListener("dragstart", (e) => {
+          dragSrcIndex = idx;
+          el.classList.add("dragging");
+          e.dataTransfer.effectAllowed = "move";
+        });
+        el.addEventListener("dragend", () => {
+          dragSrcIndex = null;
+          el.classList.remove("dragging");
+        });
+        el.addEventListener("dragover", (e) => {
+          if (dragSrcIndex === null) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = "move";
+        });
+        el.addEventListener("drop", (e) => {
+          if (dragSrcIndex === null) return;
+          e.preventDefault();
+          e.stopPropagation();
+          moveImage(dragSrcIndex, idx);
+        });
+        return el;
       }
 
       dropzone.addEventListener("click", () => fileInput.click());
@@ -747,25 +858,36 @@
       });
 
       [dateInput, locationInput, itemInput].forEach((el) => {
-        el.addEventListener("input", saveState);
+        el.addEventListener("input", saveText);
       });
 
       floorInput.addEventListener("input", () => {
-        floorInput.value = floorInput.value.replace(/[^a-zA-Z0-9]/g, "");
-        saveState();
+        const raw = floorInput.value;
+        const filtered = raw.replace(/[^a-zA-Z0-9]/g, "");
+        // 只有出現非法字元才重寫 value，並把游標放回原本位置
+        if (filtered !== raw) {
+          const pos = floorInput.selectionStart;
+          const posAfter = raw
+            .slice(0, pos)
+            .replace(/[^a-zA-Z0-9]/g, "").length;
+          floorInput.value = filtered;
+          floorInput.setSelectionRange(posAfter, posAfter);
+        }
+        saveText();
       });
 
       clearBtn.addEventListener("click", () => {
         if (!confirm("確定要清除已儲存的表單資料與照片嗎？")) return;
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(TEXT_KEY);
+        localStorage.removeItem(IMAGES_KEY);
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
         dateInput.value = todayIso();
         locationInput.value = "";
         floorInput.value = "";
         itemInput.value = "";
         images = [];
-        thumbs.innerHTML = "";
+        renderAllThumbs();
         saveWarn.hidden = true;
-        refreshEmptyNote();
       });
 
       dateInput.value = todayIso();
@@ -951,10 +1073,10 @@
       exportBtn.addEventListener("click", async () => {
         if (typeof docx === "undefined") {
           console.error(
-            "docx 全域變數不存在——CDN 腳本可能被封鎖、404，或該版本沒有暴露全域變數。請開啟開發者工具的 Network 分頁，檢查 docx@8/build/index.js 這個請求的狀態碼。",
+            "docx 全域變數不存在——本機 docx.js 不在同資料夾，且 CDN 腳本可能被封鎖或 404。請確認 docx.js 與本 HTML 檔放在一起，或開啟開發者工具的 Network 分頁檢查請求狀態。",
           );
           alert(
-            "Word 匯出功能需要網路連線以載入必要元件，請確認網路連線後重新整理頁面再試一次。（若仍失敗，請開啟瀏覽器主控台查看詳細錯誤訊息）",
+            "Word 匯出元件尚未載入。請確認 docx.js 檔案與本頁面放在同一個資料夾（或連上網路後重新整理頁面）再試一次。",
           );
           return;
         }
