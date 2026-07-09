@@ -157,19 +157,6 @@
         border-bottom-color: var(--stamp);
       }
 
-      .date-display {
-        width: 15ch;
-        border: none;
-        background: transparent;
-        outline: none;
-        font-family: "Noto Sans TC", sans-serif;
-        font-size: 16px;
-        color: var(--ink);
-        padding: 4px 2px;
-        text-align: left;
-        cursor: pointer;
-      }
-
       .section-label {
         display: flex;
         align-items: center;
@@ -418,130 +405,6 @@
         border-color: var(--stamp);
       }
 
-      .picker-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(20, 18, 15, 0.45);
-        display: flex;
-        align-items: flex-end;
-        justify-content: center;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s ease;
-        z-index: 100;
-      }
-
-      .picker-overlay.open {
-        opacity: 1;
-        pointer-events: auto;
-      }
-
-      .picker-sheet {
-        box-sizing: border-box;
-        width: 100%;
-        max-width: 420px;
-        max-height: 100%;
-        overflow: hidden;
-        background: var(--paper);
-        border-top: 1px solid var(--paper-edge);
-        box-shadow: 0 -12px 30px -10px rgba(43, 42, 40, 0.35);
-        padding: 18px 20px 28px;
-        transform: translateY(12px);
-        transition: transform 0.2s ease;
-      }
-
-      .picker-overlay.open .picker-sheet {
-        transform: translateY(0);
-      }
-
-      .picker-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding-bottom: 14px;
-        margin-bottom: 8px;
-        border-bottom: 1px solid var(--rule);
-        font-family: "Noto Serif TC", serif;
-        font-size: 15px;
-        color: var(--ink);
-      }
-
-      .picker-header span {
-        flex: 1 1 auto;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      .picker-done {
-        flex-shrink: 0;
-        border: none;
-        background: transparent;
-        color: var(--stamp);
-        font-family: "Noto Sans TC", sans-serif;
-        font-weight: 700;
-        font-size: 15px;
-        cursor: pointer;
-      }
-
-      .picker-wheels {
-        position: relative;
-        display: flex;
-        align-items: center;
-        height: 180px;
-        overflow: hidden;
-      }
-
-      .wheel-col {
-        flex: 1 1 0;
-        min-width: 0;
-        height: 180px;
-        overflow-y: scroll;
-        scroll-snap-type: y mandatory;
-        scrollbar-width: none;
-      }
-
-      .wheel-col::-webkit-scrollbar {
-        display: none;
-      }
-
-      .wheel-item {
-        height: 36px;
-        line-height: 36px;
-        text-align: center;
-        scroll-snap-align: center;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 18px;
-        color: var(--ink-soft);
-      }
-
-      .wheel-item.selected {
-        color: var(--ink);
-        font-weight: 700;
-      }
-
-      .wheel-unit {
-        flex-shrink: 0;
-        font-family: "Noto Serif TC", serif;
-        font-size: 13px;
-        color: var(--ink-soft);
-        padding: 0 4px 0 2px;
-      }
-
-      .wheel-highlight {
-        position: absolute;
-        left: 0;
-        right: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        height: 36px;
-        border-top: 1px solid var(--rule);
-        border-bottom: 1px solid var(--rule);
-        pointer-events: none;
-      }
-
       @media (max-width: 560px) {
         .sheet {
           padding: 34px 22px 44px;
@@ -555,17 +418,6 @@
         }
         .field-location #floor {
           flex: 0 0 3em;
-        }
-        .date-display {
-          width: auto;
-          flex: 1;
-        }
-        .picker-sheet {
-          padding: 16px 12px 24px;
-        }
-        .wheel-unit {
-          font-size: 12px;
-          padding: 0 2px;
         }
         header.title h1 {
           font-size: 24px;
@@ -583,6 +435,7 @@
 
       @media (prefers-color-scheme: dark) {
         :root {
+          color-scheme: dark;
           --desk: #1c1a17;
           --paper: #242220;
           --paper-edge: #37332c;
@@ -611,9 +464,8 @@
         </header>
 
         <div class="field field-date">
-          <label for="dateDisplay">日期</label>
-          <button type="button" id="dateDisplay" class="date-display"></button>
-          <input id="date" type="hidden" />
+          <label for="date">日期</label>
+          <input id="date" type="date" />
         </div>
 
         <div class="field field-location">
@@ -702,26 +554,6 @@
       </div>
     </div>
 
-    <div id="datePickerOverlay" class="picker-overlay">
-      <div class="picker-sheet">
-        <div class="picker-header">
-          <span>選擇日期</span>
-          <button type="button" id="pickerDone" class="picker-done">
-            完成
-          </button>
-        </div>
-        <div class="picker-wheels">
-          <div class="wheel-col" id="wheelYear"></div>
-          <div class="wheel-unit">年</div>
-          <div class="wheel-col" id="wheelMonth"></div>
-          <div class="wheel-unit">月</div>
-          <div class="wheel-col" id="wheelDay"></div>
-          <div class="wheel-unit">日</div>
-          <div class="wheel-highlight"></div>
-        </div>
-      </div>
-    </div>
-
     <script type="module">
       import("https://cdn.jsdelivr.net/npm/docx@8/+esm")
         .then((mod) => {
@@ -742,12 +574,6 @@
       const saveWarn = document.getElementById("saveWarn");
       const clearBtn = document.getElementById("clearBtn");
       const dateInput = document.getElementById("date");
-      const dateDisplay = document.getElementById("dateDisplay");
-      const pickerOverlay = document.getElementById("datePickerOverlay");
-      const pickerDone = document.getElementById("pickerDone");
-      const wheelYear = document.getElementById("wheelYear");
-      const wheelMonth = document.getElementById("wheelMonth");
-      const wheelDay = document.getElementById("wheelDay");
       const locationInput = document.getElementById("location");
       const floorInput = document.getElementById("floor");
       const itemInput = document.getElementById("item");
@@ -766,117 +592,6 @@
         const now = new Date();
         return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
       }
-
-      function daysInMonth(y, m) {
-        return new Date(y, m, 0).getDate();
-      }
-
-      function range(start, end) {
-        const out = [];
-        for (let v = start; v <= end; v++) out.push(v);
-        return out;
-      }
-
-      function updateDateDisplay() {
-        const iso = dateInput.value;
-        if (!iso) {
-          dateDisplay.textContent = "請選擇日期";
-          return;
-        }
-        const [y, m, d] = iso.split("-").map(Number);
-        dateDisplay.textContent = `${y} / ${pad2(m)} / ${pad2(d)}`;
-      }
-
-      const WHEEL_ITEM_H = 36;
-      let pickerState = { y: 0, m: 0, d: 0 };
-
-      function markSelected(col, idx) {
-        col.querySelectorAll(".wheel-item").forEach((el, i) => {
-          el.classList.toggle("selected", i === idx);
-        });
-      }
-
-      function buildWheel(col, values, selectedValue, formatter) {
-        col._values = values; // 與 DOM 同步的值陣列，settle 時以此對應索引
-        col.innerHTML = "";
-        const pad = document.createElement("div");
-        pad.style.height = WHEEL_ITEM_H * 2 + "px";
-        col.appendChild(pad.cloneNode());
-        values.forEach((v) => {
-          const item = document.createElement("div");
-          item.className = "wheel-item";
-          item.textContent = formatter(v);
-          col.appendChild(item);
-        });
-        col.appendChild(pad.cloneNode());
-        const idx = Math.max(values.indexOf(selectedValue), 0);
-        col.scrollTop = idx * WHEEL_ITEM_H;
-        markSelected(col, idx);
-      }
-
-      function attachWheel(col, onSettle) {
-        let timer = null;
-        col.addEventListener("scroll", () => {
-          clearTimeout(timer);
-          timer = setTimeout(() => {
-            const values = col._values || [];
-            if (!values.length) return;
-            const idx = Math.min(
-              Math.max(Math.round(col.scrollTop / WHEEL_ITEM_H), 0),
-              values.length - 1,
-            );
-            col.scrollTo({ top: idx * WHEEL_ITEM_H, behavior: "smooth" });
-            markSelected(col, idx);
-            onSettle(values[idx]);
-          }, 120);
-        });
-      }
-
-      function rebuildDayWheel() {
-        const dim = daysInMonth(pickerState.y, pickerState.m);
-        const days = range(1, dim);
-        pickerState.d = Math.min(pickerState.d, dim);
-        buildWheel(wheelDay, days, pickerState.d, pad2);
-      }
-
-      function openDatePicker() {
-        const iso = dateInput.value || todayIso();
-        const [y, m, d] = iso.split("-").map(Number);
-        pickerState = { y, m, d };
-        buildWheel(wheelYear, range(y - 5, y + 5), y, (v) => String(v));
-        buildWheel(wheelMonth, range(1, 12), m, pad2);
-        rebuildDayWheel();
-        pickerOverlay.classList.add("open");
-      }
-
-      function closeDatePicker() {
-        pickerOverlay.classList.remove("open");
-      }
-
-      attachWheel(wheelYear, (v) => {
-        if (v === pickerState.y) return;
-        pickerState.y = v;
-        rebuildDayWheel();
-      });
-      attachWheel(wheelMonth, (v) => {
-        if (v === pickerState.m) return;
-        pickerState.m = v;
-        rebuildDayWheel();
-      });
-      attachWheel(wheelDay, (v) => {
-        pickerState.d = v;
-      });
-
-      dateDisplay.addEventListener("click", openDatePicker);
-      pickerDone.addEventListener("click", () => {
-        dateInput.value = `${pickerState.y}-${pad2(pickerState.m)}-${pad2(pickerState.d)}`;
-        updateDateDisplay();
-        saveState();
-        closeDatePicker();
-      });
-      pickerOverlay.addEventListener("click", (e) => {
-        if (e.target === pickerOverlay) closeDatePicker();
-      });
 
       function formatDate(isoDate) {
         if (!isoDate) return "";
@@ -1031,7 +746,7 @@
         cameraInput.value = "";
       });
 
-      [locationInput, itemInput].forEach((el) => {
+      [dateInput, locationInput, itemInput].forEach((el) => {
         el.addEventListener("input", saveState);
       });
 
@@ -1051,12 +766,10 @@
         thumbs.innerHTML = "";
         saveWarn.hidden = true;
         refreshEmptyNote();
-        updateDateDisplay();
       });
 
       dateInput.value = todayIso();
       loadState();
-      updateDateDisplay();
 
       ["dragenter", "dragover"].forEach((evt) => {
         dropzone.addEventListener(evt, (e) => {
