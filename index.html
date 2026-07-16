@@ -1076,6 +1076,48 @@
         return Packer.toBlob(doc);
       }
 
+      // 必須在點擊當下立刻呼叫，不能等圖片處理完才呼叫，
+      // 否則瀏覽器可能已經判定使用者手勢逾期，導致視窗不會跳出、直接靜默下載
+      async function pickSaveHandle(suggestedName) {
+        if (!window.showSaveFilePicker) return null;
+        try {
+          return await window.showSaveFilePicker({
+            suggestedName,
+            types: [
+              {
+                description: "Word 文件",
+                accept: {
+                  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                    [".docx"],
+                },
+              },
+            ],
+          });
+        } catch (err) {
+          if (err.name === "AbortError") throw err; // 使用者取消存檔
+          console.warn("另存新檔失敗，改用瀏覽器預設下載", err);
+          return null;
+        }
+      }
+
+      async function writeFile(handle, blob, suggestedName) {
+        if (handle) {
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+          return;
+        }
+        // 不支援 File System Access API 時（如 Firefox），退回傳統下載方式
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = suggestedName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
       exportBtn.addEventListener("click", async () => {
         if (typeof docx === "undefined") {
           console.error(
@@ -1095,20 +1137,22 @@
           const dateCompact = formatDateCompact(dateInput.value);
           const grid = computeGrid();
           const cols = grid.cols;
-
-          const blob = await buildDocx({ item, dateStr, loc, grid, cols });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
           const baseName =
             sanitizeFilename(
               [dateCompact, loc, item].filter(Boolean).join("_"),
             ) || "領料記錄表";
-          a.href = url;
-          a.download = baseName + ".docx";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+          const suggestedName = baseName + ".docx";
+
+          let handle;
+          try {
+            handle = await pickSaveHandle(suggestedName);
+          } catch (err) {
+            if (err.name === "AbortError") return; // 使用者取消存檔
+            throw err;
+          }
+
+          const blob = await buildDocx({ item, dateStr, loc, grid, cols });
+          await writeFile(handle, blob, suggestedName);
         } catch (err) {
           console.error("Word 匯出失敗：", err);
           alert("Word 匯出失敗，請再試一次。（詳細錯誤請見瀏覽器主控台）");
