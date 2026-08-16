@@ -1,0 +1,477 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+:root {
+  --desk: #e7e2d6;
+  --desk-shadow: #cfc8b6;
+  --paper: #fbf9f3;
+  --paper-edge: #efe9da;
+  --ink: #2b2a28;
+  --ink-soft: #79746a;
+  --rule: #cdc4ae;
+  --stamp: #b23a2f;
+  --stamp-dark: #8f2c23;
+  --stamp-ink: #fdf0ee;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -10%, #f1ece0 0%, transparent 60%),
+    var(--desk);
+  color: var(--ink);
+  font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  padding: 56px 20px 80px;
+}
+
+.stage {
+  width: 100%;
+  max-width: 760px;
+}
+
+.sheet {
+  background: var(--paper);
+  border: 1px solid var(--paper-edge);
+  box-shadow:
+    0 1px 0 #fff inset,
+    0 30px 60px -20px rgba(43, 42, 40, 0.35),
+    0 8px 20px -10px rgba(43, 42, 40, 0.25);
+  padding: 52px 56px 60px;
+  position: relative;
+}
+
+.sheet::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 1px solid #e3dcc9;
+  pointer-events: none;
+}
+
+header.title {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+header.title h1 {
+  font-family: "Noto Serif TC", serif;
+  font-weight: 700;
+  font-size: 30px;
+  letter-spacing: 0.12em;
+  margin: 0 0 8px;
+}
+
+header.title .sub {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+}
+
+.field-date {
+  max-width: 240px;
+  margin-bottom: 28px;
+}
+
+.field-item {
+  margin-bottom: 28px;
+}
+
+.field-item input {
+  width: auto;
+  flex: 1;
+  min-width: 0;
+}
+
+.field {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  border-bottom: 1.5px solid var(--rule);
+  padding-bottom: 8px;
+}
+
+.field label {
+  font-family: "Noto Serif TC", serif;
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.field-location {
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.field-location #location {
+  width: 9em;
+}
+
+.field-location #floor {
+  width: 3em;
+  padding-left: 6px;
+  border-left: 1px solid var(--rule);
+}
+
+.floor-suffix {
+  margin-left: -6px;
+  font-family: "Noto Serif TC", serif;
+  font-size: 15px;
+  color: var(--ink-soft);
+}
+
+.field input {
+  width: 15ch;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 16px;
+  color: var(--ink);
+  padding: 4px 2px;
+}
+
+.field input::placeholder {
+  color: #bdb6a4;
+}
+
+.field:focus-within {
+  border-bottom-color: var(--stamp);
+}
+
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  margin: 0 0 14px;
+}
+
+.section-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+#dropzone {
+  border: 1.5px dashed #b8ae94;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(178, 58, 47, 0.035) 0 10px,
+      transparent 10px 20px
+    ),
+    #f5f1e6;
+  padding: 34px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    transform 0.12s ease;
+  position: relative;
+}
+
+#dropzone:hover {
+  border-color: var(--stamp);
+}
+
+#dropzone.dragover {
+  border-color: var(--stamp);
+  background: #f4e9e6;
+  transform: scale(0.995);
+}
+
+#dropzone .dz-icon {
+  font-family: "Noto Serif TC", serif;
+  font-size: 15px;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+#dropzone .dz-hint {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: var(--ink-soft);
+  letter-spacing: 0.05em;
+}
+
+#fileInput,
+#cameraInput {
+  display: none;
+}
+
+.camera-btn {
+  position: relative;
+  z-index: 1;
+  margin-top: 16px;
+  padding: 8px 22px;
+  border: 1px solid #b8ae94;
+  background: #fff;
+  color: var(--ink);
+  font-family: "Noto Sans TC", sans-serif;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.camera-btn:hover {
+  border-color: var(--stamp);
+  color: var(--stamp);
+}
+
+#thumbs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.thumb {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--paper-edge);
+  padding: 6px 6px 22px;
+  box-shadow: 0 4px 10px -4px rgba(43, 42, 40, 0.3);
+  transform: rotate(var(--r, 0deg));
+  cursor: grab;
+}
+
+.thumb.dragging {
+  opacity: 0.45;
+}
+
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 92px;
+  object-fit: cover;
+}
+
+.thumb .cap {
+  position: absolute;
+  left: 6px;
+  right: 46px;
+  bottom: 4px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 9px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.thumb .mv {
+  position: absolute;
+  bottom: 1px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.thumb .mv:hover {
+  color: var(--stamp);
+}
+
+.thumb .mv-l {
+  right: 22px;
+}
+
+.thumb .mv-r {
+  right: 2px;
+}
+
+.thumb .rm {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--paper-edge);
+  background: var(--ink);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.thumb .rm:hover {
+  background: var(--stamp);
+}
+
+.empty-note {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.save-warn {
+  margin-top: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--stamp);
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 52px;
+}
+
+.stamp-btn {
+  --size: 116px;
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  border: 3px solid var(--stamp);
+  background: transparent;
+  color: var(--stamp);
+  font-family: "Noto Serif TC", serif;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+  transform: rotate(-6deg);
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+  box-shadow: 0 0 0 3px rgba(178, 58, 47, 0) inset;
+  position: relative;
+}
+
+.stamp-btn::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--stamp);
+  border-radius: 50%;
+  opacity: 0.55;
+}
+
+.stamp-btn:hover {
+  background: var(--stamp);
+  color: var(--stamp-ink);
+  transform: rotate(-6deg) scale(1.04);
+}
+
+.stamp-btn:active {
+  transform: rotate(-6deg) scale(0.94);
+}
+
+.stamp-btn:disabled {
+  opacity: 0.45;
+  cursor: wait;
+  transform: rotate(-6deg);
+}
+
+footer.note {
+  text-align: center;
+  margin-top: 22px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: var(--ink-soft);
+  letter-spacing: 0.05em;
+}
+
+.clear-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.clear-btn:hover {
+  color: var(--stamp);
+  border-color: var(--stamp);
+}
+
+@media (max-width: 560px) {
+  .sheet {
+    padding: 34px 22px 44px;
+  }
+  .field-date {
+    max-width: none;
+  }
+  .field input {
+    width: auto;
+    flex: 1;
+  }
+  .field-location #floor {
+    flex: 0 0 3em;
+  }
+  header.title h1 {
+    font-size: 24px;
+  }
+  header.title {
+    padding-top: 24px;
+  }
+  .clear-btn {
+    top: 14px;
+    right: 14px;
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --desk: #1c1a17;
+    --paper: #242220;
+    --paper-edge: #37332c;
+    --ink: #ece7db;
+    --ink-soft: #9d9686;
+    --rule: #4a4438;
+  }
+  #dropzone {
+    background: #2b2823;
+  }
+  .thumb {
+    background: #2b2823;
+  }
+}
