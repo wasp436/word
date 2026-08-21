@@ -99,6 +99,30 @@
           ⚠ 資料量超過瀏覽器儲存空間，目前內容不會自動保存，請盡快輸出 Word
         </div>
 
+        <div class="export-format">
+          <label for="exportFormat">輸出格式</label>
+          <select id="exportFormat">
+            <option value="docx">只輸出 Word</option>
+            <option value="folder">輸出照片資料夾＋Word</option>
+            <option value="zip">輸出 ZIP（照片＋Word）</option>
+          </select>
+        </div>
+
+        <div class="export-format">
+          <label for="saveMode">儲存方式</label>
+          <select id="saveMode">
+            <option value="prompt">另存新檔（自選位置）</option>
+            <option value="download">直接下載到瀏覽器預設下載資料夾</option>
+          </select>
+        </div>
+
+        <div class="auto-export">
+          <label>
+            <input type="checkbox" id="autoExportOnDrop" />
+            拖入資料夾時自動輸出
+          </label>
+        </div>
+
         <div class="actions">
           <button class="stamp-btn" id="exportBtn" type="button">
             輸&nbsp;出<br />Word

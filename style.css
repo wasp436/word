@@ -344,6 +344,73 @@ header.title .sub {
   text-align: center;
 }
 
+.export-format {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+.export-format + .export-format {
+  margin-top: 12px;
+}
+
+.export-format label {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+}
+
+.export-format select {
+  font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.export-format select:hover,
+.export-format select:focus-visible {
+  border-color: var(--stamp);
+  outline: none;
+}
+
+.export-format select:disabled,
+.export-format option:disabled {
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+
+.auto-export {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.auto-export label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.auto-export input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--stamp);
+  cursor: pointer;
+}
+
 .actions {
   display: flex;
   justify-content: center;
