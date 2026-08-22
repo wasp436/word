@@ -42,19 +42,6 @@ const exportBtn = document.getElementById("exportBtn");
 const exportFormat = document.getElementById("exportFormat");
 const saveMode = document.getElementById("saveMode");
 const autoExportOnDrop = document.getElementById("autoExportOnDrop");
-const SUPPORTS_FOLDER_PICKER = !!window.showDirectoryPicker;
-if (!SUPPORTS_FOLDER_PICKER) {
-  const folderOption = exportFormat.querySelector('option[value="folder"]');
-  if (folderOption) {
-    folderOption.disabled = true;
-    folderOption.textContent += "（此瀏覽器不支援）";
-  }
-}
-
-// 輸出資料夾一定要讓使用者選擇位置，「儲存方式」在這個格式下沒有意義
-function updateSaveModeAvailability() {
-  saveMode.disabled = exportFormat.value === "folder";
-}
 const saveWarn = document.getElementById("saveWarn");
 const clearBtn = document.getElementById("clearBtn");
 const dateInput = document.getElementById("date");
@@ -167,19 +154,10 @@ function loadState() {
     if (text.exportFormat) {
       exportFormat.value = text.exportFormat;
     } else if (typeof text.zipEnabled === "boolean") {
-      // 舊版設定遷移：以前只有「同時輸出 ZIP／資料夾」一個開關
-      exportFormat.value = text.zipEnabled
-        ? SUPPORTS_FOLDER_PICKER
-          ? "folder"
-          : "zip"
-        : "docx";
-    }
-    // 還原的格式若目前被停用（例如換了不支援資料夾的瀏覽器），退回只輸出 Word
-    if (exportFormat.selectedOptions[0]?.disabled) {
-      exportFormat.value = "docx";
+      // 舊版設定遷移：以前只有「同時輸出 ZIP」一個開關
+      exportFormat.value = text.zipEnabled ? "zip" : "docx";
     }
     if (text.saveMode) saveMode.value = text.saveMode;
-    updateSaveModeAvailability();
     autoExportOnDrop.checked = !!text.autoExportOnDrop;
   }
   (imgs || []).forEach((data) => {
@@ -326,10 +304,7 @@ cameraInput.addEventListener("change", (e) => {
   el.addEventListener("input", saveText);
 });
 
-exportFormat.addEventListener("change", () => {
-  updateSaveModeAvailability();
-  saveText();
-});
+exportFormat.addEventListener("change", saveText);
 saveMode.addEventListener("change", saveText);
 autoExportOnDrop.addEventListener("change", saveText);
 
@@ -356,7 +331,6 @@ function clearSavedData() {
   itemInput.value = "";
   exportFormat.value = "docx";
   saveMode.value = "prompt";
-  updateSaveModeAvailability();
   images = [];
   renderAllThumbs();
   saveWarn.hidden = true;
@@ -572,16 +546,10 @@ dropzone.addEventListener("drop", async (e) => {
       if (entry.isDirectory) {
         clearSavedData();
 
-        // 自動輸出時不能再跳出資料夾／另存新檔視窗（拖曳後經過圖片壓縮等
-        // 非同步處理，使用者手勢已經逾期，瀏覽器會擋掉跳窗），固定用
-        // ZIP＋直接下載；手動輸出才照原本邏輯優先用「資料夾」
-        exportFormat.value = autoExport
-          ? "zip"
-          : SUPPORTS_FOLDER_PICKER
-            ? "folder"
-            : "zip";
+        // 自動輸出時不能再跳出另存新檔視窗（拖曳後經過圖片壓縮等非同步處理，
+        // 使用者手勢已經逾期，瀏覽器會擋掉跳窗），固定用 ZIP＋直接下載
+        exportFormat.value = "zip";
         saveMode.value = "download";
-        updateSaveModeAvailability();
         saveText();
 
         const match = matchLocationAndFloor(entry.name);
@@ -866,47 +834,6 @@ async function buildZip({ docxBlob, docxFilename }) {
   return zip.generateAsync({ type: "blob" });
 }
 
-async function writeFileHandle(dirHandle, filename, data) {
-  const fileHandle = await dirHandle.getFileHandle(filename, {
-    create: true,
-  });
-  const writable = await fileHandle.createWritable();
-  await writable.write(data);
-  await writable.close();
-}
-
-// 直接把 folderName/ 資料夾建在使用者選擇的目錄下，寫入 docx 與所有照片，
-// 不經過 zip 壓縮／解壓縮
-async function writeFolderExport({
-  parentDirHandle,
-  folderName,
-  docxBlob,
-  docxFilename,
-}) {
-  const subDir = await parentDirHandle.getDirectoryHandle(folderName, {
-    create: true,
-  });
-  await writeFileHandle(subDir, docxFilename, docxBlob);
-
-  const { files, fallbackNames } = await collectExportFiles([docxFilename]);
-  for (const f of files) {
-    await writeFileHandle(subDir, f.name, f.data);
-  }
-  warnFallbackPhotos(fallbackNames);
-}
-
-// 必須在點擊當下立刻呼叫，不能等圖片處理完才呼叫（同 pickSaveHandle 的理由）
-async function pickDirectoryHandle() {
-  if (!window.showDirectoryPicker) return null;
-  try {
-    return await window.showDirectoryPicker({ mode: "readwrite" });
-  } catch (err) {
-    if (err.name === "AbortError") throw err; // 使用者取消選擇資料夾
-    console.warn("選擇資料夾失敗，改用 ZIP 下載", err);
-    return null;
-  }
-}
-
 async function writeFile(handle, blob, suggestedName) {
   if (handle) {
     const writable = await handle.createWritable();
@@ -936,11 +863,7 @@ async function runExport() {
     return;
   }
 
-  const format = exportFormat.value; // "docx" | "folder" | "zip"
-  if (format === "folder" && !SUPPORTS_FOLDER_PICKER) {
-    alert("此瀏覽器不支援直接輸出資料夾，請改選其他輸出格式。");
-    return;
-  }
+  const format = exportFormat.value; // "docx" | "zip"
   if (format === "zip" && typeof JSZip === "undefined") {
     console.error(
       "JSZip 全域變數不存在——本機 jszip.js 不在同資料夾，且 CDN 腳本可能被封鎖或 404。請確認 jszip.js 與本 HTML 檔放在一起，或開啟開發者工具的 Network 分頁檢查請求狀態。",
@@ -964,31 +887,7 @@ async function runExport() {
       "領料記錄表";
     const docxFilename = baseName + ".docx";
 
-    if (format === "folder") {
-      // 資料夾名稱只用地點樓層＋項目，不含日期
-      const folderName =
-        sanitizeFilename([loc, item].filter(Boolean).join("_")) || "領料記錄表";
-
-      let parentDirHandle;
-      try {
-        parentDirHandle = await pickDirectoryHandle();
-      } catch (err) {
-        if (err.name === "AbortError") return; // 使用者取消選擇資料夾
-        throw err;
-      }
-      if (!parentDirHandle) {
-        alert("無法寫入所選資料夾，請重新輸出並選擇其他資料夾。");
-        return;
-      }
-
-      const docxBlob = await buildDocx({ item, dateStr, loc, grid, cols });
-      await writeFolderExport({
-        parentDirHandle,
-        folderName,
-        docxBlob,
-        docxFilename,
-      });
-    } else if (format === "zip") {
+    if (format === "zip") {
       // zip 本身的檔名＝資料夾名稱（地點樓層＋項目，不含日期），解壓縮後
       // 才會剛好只長出一層同名資料夾，不會多包一層
       const folderName =
