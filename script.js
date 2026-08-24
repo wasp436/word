@@ -329,8 +329,6 @@ function clearSavedData() {
   locationInput.value = "";
   floorInput.value = "";
   itemInput.value = "";
-  exportFormat.value = "docx";
-  saveMode.value = "prompt";
   images = [];
   renderAllThumbs();
   saveWarn.hidden = true;
@@ -545,12 +543,6 @@ dropzone.addEventListener("drop", async (e) => {
     for (const entry of entries) {
       if (entry.isDirectory) {
         clearSavedData();
-
-        // 自動輸出時不能再跳出另存新檔視窗（拖曳後經過圖片壓縮等非同步處理，
-        // 使用者手勢已經逾期，瀏覽器會擋掉跳窗），固定用 ZIP＋直接下載
-        exportFormat.value = "zip";
-        saveMode.value = "download";
-        saveText();
 
         const match = matchLocationAndFloor(entry.name);
         if (match) {
