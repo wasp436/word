@@ -321,11 +321,24 @@ floorInput.addEventListener("input", () => {
   saveText();
 });
 
-function clearSavedData() {
+function autoFillFloorFromItem() {
+  const match = itemInput.value.match(ROOM_NUMBER_FLOOR_RE);
+  if (!match) return;
+  const floor = Math.floor(Number(match[1]) / 10);
+  if (floor > 0 && floorInput.value !== String(floor)) {
+    floorInput.value = String(floor);
+    saveText();
+  }
+}
+
+itemInput.addEventListener("input", autoFillFloorFromItem);
+
+function clearSavedData(keepDate = false) {
+  const keptDate = dateInput.value;
   localStorage.removeItem(TEXT_KEY);
   localStorage.removeItem(IMAGES_KEY);
   localStorage.removeItem(LEGACY_STORAGE_KEY);
-  dateInput.value = todayIso();
+  dateInput.value = keepDate ? keptDate : todayIso();
   locationInput.value = "";
   floorInput.value = "";
   itemInput.value = "";
@@ -367,6 +380,9 @@ const FLOOR_TRAILING_RE = /([A-Za-z]{0,2}\d{1,3})$/;
 // 緊鄰地點文字的樓層片段：「B1」（字母前綴＋數字）或「6M」（數字＋單一字母後綴），
 // 字母後綴只抓 1 個字，避免把後面接著的項目文字（如 EF-3）一起吃進來
 const FLOOR_NEIGHBOR_RE = /^([A-Za-z]{1,2}\d{1,3}|\d{1,3}[A-Za-z]?)/;
+// 病房號碼樣式：「61病房」「143病室」等。病房號碼本身不是樓層標記，
+// 樓層＝房號去掉最後一碼（醫院房號慣例，如 61 病房＝6 樓 1 號房、143 病房＝14 樓 3 號房）
+const ROOM_NUMBER_FLOOR_RE = /(\d{2,3})\s*病[房室]/;
 
 // 地點別名／俗稱對照表：資料夾常用簡稱不是正式地點名稱的縮寫或子字串時，
 // 在這裡加一筆「別名: 正式地點」即可辨識
@@ -472,11 +488,17 @@ function matchLocationAndFloor(folderName) {
       // 沒抓到明確樓層樣式：取地點緊鄰前後的英數字當樓層，其餘當項目名稱
       const { before, after } = found;
       const afterStripped = after.replace(/^[\s_-]+/, "");
+      const roomMatch = afterStripped.match(ROOM_NUMBER_FLOOR_RE);
       const afterNum = afterStripped.match(FLOOR_NEIGHBOR_RE);
       const beforeNum = before.match(
         /([A-Za-z]{1,2}\d{1,3}|\d{1,3}[A-Za-z]?)[\s_-]*$/,
       );
-      if (afterNum) {
+      if (roomMatch && roomMatch.index === 0) {
+        // 病房號碼要整段留在項目文字裡（不能被當成樓層樣式吃掉），
+        // 樓層改用房號去掉最後一碼算出來
+        f = String(Math.floor(Number(roomMatch[1]) / 10));
+        item = trim(before + after);
+      } else if (afterNum) {
         f = afterNum[1];
         item = trim(before + afterStripped.slice(afterNum[0].length));
       } else if (beforeNum) {
@@ -542,7 +564,7 @@ dropzone.addEventListener("drop", async (e) => {
     // 加入該資料夾的照片→（開了自動輸出的話）輸出，再處理下一個資料夾
     for (const entry of entries) {
       if (entry.isDirectory) {
-        clearSavedData();
+        clearSavedData(true);
 
         const match = matchLocationAndFloor(entry.name);
         if (match) {
